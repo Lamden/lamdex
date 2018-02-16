@@ -1,5 +1,6 @@
 import random
 import secrets
+import requests
 
 '''
 
@@ -22,9 +23,9 @@ A TX is split into an input and an output fulfilled in two parts.
 '''
 
 wallets = [secrets.token_hex(4) for x in range(10)]
+supported_tokens = ['EOS', 'ICX', 'OMG', 'TAU']
 
-
-def random_stake(range=(10, 50)) -> object:
+def random_stake(range=(10, 50)) -> dict:
     return {
         'amount': random.randint(range[0], range[1]),
         'owner': random.sample(wallets, 1)[0],
@@ -101,11 +102,16 @@ def tx_in(token_sell, token_buy, tx):
 
     print('sending out tx. buying {} with {} TAU'.format(token_buy, out_tx['amount']))
 
+
 def tx_out(token, tx):
     pass
 
-def return_rate():
-    return 1
+
+def return_rate(token):
+    assert token in supported_tokens, 'Pass a supported token: {}'.format(supported_tokens)
+    url = 'https://api.hitbtc.com/api/2/public/ticker/{}BTC'.format(token)
+    r = requests.get(url)
+    return float(r.json()['last'])
 
 
 tx_in('EOS', 'ICX', random_stake((100, 200)))
