@@ -41,7 +41,7 @@ minor_liquid = {
 }
 
 
-def tx_in(token, tx):
+def tx_in(token_sell, token_buy, tx):
 
     # determine the forex exchange rate between the base currency
     # and major liquid market
@@ -53,7 +53,7 @@ def tx_in(token, tx):
     filled = 0
     out_tx = {'amount': 0, 'owner': tx['owner'], 'id': secrets.token_hex(8)}
 
-    print('attempting to liquidate {}\n'.format(tx))
+    print('attempting to liquidate {} {} for TAU\n'.format(tx['amount'], token_sell))
 
     # try to completely fill the order with the current major liquid
     while filled < to_fill:
@@ -68,13 +68,10 @@ def tx_in(token, tx):
             out_tx['amount'] += ml['amount']
 
             # calculate how much to give the major liquid holder
-            to_give = to_fill / ml['amount']
-
-            # calculate the value in tokens
-            to_give /= fx
+            to_give = ml['amount'] / fx
 
             # shoot off a transaction to illiquid which attempts to fill it there (potential recursion here)
-            print('complete liquidation of {}'.format(ml))
+            print('complete: {} {} sold, {} TAU bought'.format(to_give, token_sell, ml['amount']))
             print('{}/{} left to liquidate'.format(filled, to_fill))
             print('sending to minor markets\n')
 
@@ -83,9 +80,12 @@ def tx_in(token, tx):
 
         else:
             # otherwise, the entire trade could not be liquidated and we have to alter is slightly
-            print('partial liquidation of {}'.format(ml))
+            print('partial: liquidation of {}'.format(ml))
             difference = to_fill - filled
             ml['amount'] -= difference
+
+            filled += difference
+            out_tx['amount'] += difference
 
             print('only {} liquidated'.format(difference))
 
@@ -99,9 +99,13 @@ def tx_in(token, tx):
             # lets redundantly break just in case
             break
 
+    print('sending out tx. buying {} with {} TAU'.format(token_buy, out_tx['amount']))
+
+def tx_out(token, tx):
+    pass
 
 def return_rate():
     return 1
 
 
-tx_in('EOS', random_stake((100, 200)))
+tx_in('EOS', 'ICX', random_stake((100, 200)))
