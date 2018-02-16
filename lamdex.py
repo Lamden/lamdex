@@ -25,9 +25,10 @@ A TX is split into an input and an output fulfilled in two parts.
 wallets = [secrets.token_hex(4) for x in range(10)]
 supported_tokens = ['EOS', 'ICX', 'OMG', 'TAU']
 
-def random_stake(range=(10, 50)) -> dict:
+
+def random_stake(rng=(10, 50)) -> dict:
     return {
-        'amount': random.randint(range[0], range[1]),
+        'amount': random.randint(rng[0], rng[1]),
         'owner': random.sample(wallets, 1)[0],
         'id': secrets.token_hex(8)
     }
@@ -42,15 +43,25 @@ minor_liquid = {
 }
 
 
+def fill_tx():
+    pass
+
+
+def build_tx():
+    pass
+
+
 def tx_in(token_sell, token_buy, tx):
 
     # determine the forex exchange rate between the base currency
     # and major liquid market
 
-    fx = return_rate()/return_rate()
+    fx = forex(token_sell, 'TAU')
+
+    print(fx)
 
     # setup how much to fill and the out transaction for when it is filled
-    to_fill = fx * tx['amount']
+    to_fill = tx['amount'] * fx
     filled = 0
     out_tx = {'amount': 0, 'owner': tx['owner'], 'id': secrets.token_hex(8)}
 
@@ -101,17 +112,26 @@ def tx_in(token_sell, token_buy, tx):
             break
 
     print('sending out tx. buying {} with {} TAU'.format(token_buy, out_tx['amount']))
+    print(out_tx)
 
 
 def tx_out(token, tx):
     pass
 
 
-def return_rate(token):
+def forex(token_a, token_b, test=False):
+    if test is True:
+        return 1
+    return return_rate(token_a)/return_rate(token_b)
+
+
+def return_rate(token: str, test: bool = False) -> float:
+    if test is True:
+        return 1
     assert token in supported_tokens, 'Pass a supported token: {}'.format(supported_tokens)
     url = 'https://api.hitbtc.com/api/2/public/ticker/{}BTC'.format(token)
     r = requests.get(url)
     return float(r.json()['last'])
 
-
-tx_in('EOS', 'ICX', random_stake((100, 200)))
+if __name__ == "__main__":
+    tx_in('EOS', 'ICX', random_stake((10, 20)))
